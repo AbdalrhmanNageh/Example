@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="120">
+  <rect width="300" height="120" fill="#f5f5f5"/>
+
+  <foreignObject x="40" y="30" width="220" height="60">
+    <body xmlns="http://www.w3.org/1999/xhtml">
+      <button onclick="alert('SVG Click!')">
+        Click Me
+      </button>
+    </body>
+  </foreignObject>
+</svg>

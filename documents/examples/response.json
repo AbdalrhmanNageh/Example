@@ -1,0 +1,6 @@
+{
+  "id": "sample-001",
+  "status": "ready",
+  "imageUrl": "/images/examples/api-sample.svg",
+  "tags": ["demo", "api", "asset-library"]
+}

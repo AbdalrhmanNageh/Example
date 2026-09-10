@@ -1,0 +1,14 @@
+{
+  "title": "API Assets",
+  "subtitle": "Public assets for API testing and development",
+  "accentColor": "#4f46e5",
+  "defaultCategoryCover": "default-category.svg",
+  "coverPositions": {
+    "documents": "center",
+    "images": "center"
+  },
+  "tags": {
+    "documents/examples/response.json": ["mock-response", "json"],
+    "images/examples/api-sample.svg": ["demo", "image"]
+  }
+}

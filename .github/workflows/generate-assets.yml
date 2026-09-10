@@ -1,0 +1,105 @@
+name: Generate asset index
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan repository assets
+        shell: python
+        run: |
+          import json
+          import re
+          import subprocess
+          from pathlib import Path
+
+          root = Path('.')
+          excluded_dirs = {'.git', '.github', 'node_modules', '.vscode', '__pycache__'}
+          excluded_root_files = {'index.html', 'style.css', 'app.js', 'assets.json', 'assets-data.js', 'README.md', 'prompt.txt', '.gitignore'}
+          type_map = {
+              'image': {'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'},
+              'video': {'mp4', 'webm', 'mov'},
+              'audio': {'mp3', 'wav', 'ogg'},
+              'document': {'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv'},
+              'json': {'json'}, 'xml': {'xml'}
+          }
+
+          def ignored(path):
+              return any(part in excluded_dirs for part in path.parts)
+
+          def file_type(path):
+              suffix = path.suffix.lower().lstrip('.')
+              return next((kind for kind, suffixes in type_map.items() if suffix in suffixes), 'other')
+
+          def readable_size(size):
+              units = ['B', 'KB', 'MB', 'GB']
+              index = 0
+              value = float(size)
+              while value >= 1024 and index < len(units) - 1:
+                  value /= 1024
+                  index += 1
+              return f'{value:.1f} {units[index]}' if index else f'{int(value)} {units[index]}'
+
+          def media_metadata(path):
+              details = {}
+              suffix = path.suffix.lower()
+              if suffix == '.svg':
+                  text = path.read_text(encoding='utf-8', errors='ignore')[:4096]
+                  viewbox = re.search(r'viewBox=["\']\s*[\d.]+\s+[\d.]+\s+([\d.]+)\s+([\d.]+)', text)
+                  if viewbox:
+                      details['dimensions'] = f'{viewbox.group(1)} × {viewbox.group(2)}'
+              if suffix in {'.mp4', '.webm', '.mov', '.mp3', '.wav', '.ogg'}:
+                  try:
+                      result = subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', str(path)], capture_output=True, text=True, timeout=10)
+                      seconds = round(float(result.stdout.strip()))
+                      if seconds:
+                          details['duration'] = f'{seconds // 60}:{seconds % 60:02d}'
+                  except (FileNotFoundError, ValueError, subprocess.TimeoutExpired):
+                      pass
+              return details
+
+          folders = sorted((p for p in root.rglob('*') if p.is_dir() and not ignored(p)), key=lambda p: (len(p.parts), str(p).lower()))
+          nodes = {}
+          categories = []
+          for folder in folders:
+              relative = folder.relative_to(root).as_posix()
+              node = {'name': folder.name, 'path': relative, 'children': [], 'files': []}
+              nodes[relative] = node
+              parent = folder.parent.relative_to(root).as_posix() if folder.parent != root else None
+              (nodes[parent]['children'] if parent else categories).append(node)
+
+          for file in sorted(root.rglob('*'), key=lambda p: str(p).lower()):
+              if not file.is_file() or ignored(file) or file.parent == root:
+                  continue
+              relative = file.relative_to(root).as_posix()
+              parent = file.parent.relative_to(root).as_posix()
+              if parent not in nodes:
+                  continue
+              asset = {
+                  'name': file.name, 'path': relative,
+                  'type': file_type(file), 'size': readable_size(file.stat().st_size),
+                  'modified': file.stat().st_mtime_ns and __import__('datetime').datetime.fromtimestamp(file.stat().st_mtime, tz=__import__('datetime').timezone.utc).isoformat()
+              }
+              asset.update(media_metadata(file))
+              nodes[parent]['files'].append(asset)
+
+          index = {'categories': categories}
+          Path('assets.json').write_text(json.dumps(index, indent=2) + '\n', encoding='utf-8')
+          Path('assets-data.js').write_text('window.ASSET_INDEX = ' + json.dumps(index, separators=(',', ':')) + ';\n', encoding='utf-8')
+      - name: Commit updated index
+        run: |
+          if ! git diff --quiet -- assets.json assets-data.js; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add assets.json assets-data.js
+            git commit -m "chore: update asset index"
+            git push
+          fi

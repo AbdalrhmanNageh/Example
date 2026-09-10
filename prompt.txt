@@ -1,0 +1,1312 @@
+Build a complete, polished, responsive **GitHub Pages Asset Library** using ONLY:
+
+* HTML5
+* CSS3
+* Vanilla JavaScript
+
+Do NOT use:
+
+* React
+* Vue
+* Angular
+* Bootstrap
+* Tailwind
+* jQuery
+* Any external JavaScript framework
+* Any backend
+* Any build tool
+* Any npm package
+
+The project will be hosted as a **static GitHub Pages website** and will be used as a public library for API/Postman test assets such as images, PDFs, documents, videos, audio files, JSON files, and other example files.
+
+---
+
+# 1. Main Concept
+
+The GitHub repository will contain folders and files.
+
+The website should represent the repository structure visually.
+
+### Important rule:
+
+**Every folder should automatically be treated as a Category.**
+
+**Every file inside a folder should automatically be treated as an Item belonging to that Category.**
+
+For example:
+
+```text
+repository/
+│
+├── images/
+│   ├── users/
+│   │   ├── user-01.jpg
+│   │   └── user-02.jpg
+│   │
+│   ├── products/
+│   │   ├── product-01.jpg
+│   │   └── product-02.png
+│   │
+│   └── banners/
+│       └── banner-01.jpg
+│
+├── documents/
+│   ├── pdf/
+│   │   ├── example-01.pdf
+│   │   └── example-02.pdf
+│   │
+│   └── word/
+│       └── document-01.docx
+│
+├── videos/
+│   └── demo.mp4
+│
+└── audio/
+    └── sample.mp3
+```
+
+The website should interpret this structure as:
+
+```text
+Images
+  ├── Users
+  │    ├── user-01.jpg
+  │    └── user-02.jpg
+  │
+  ├── Products
+  │    ├── product-01.jpg
+  │    └── product-02.png
+  │
+  └── Banners
+       └── banner-01.jpg
+
+Documents
+  ├── PDF
+  │    ├── example-01.pdf
+  │    └── example-02.pdf
+  │
+  └── Word
+       └── document-01.docx
+
+Videos
+  └── demo.mp4
+
+Audio
+  └── sample.mp3
+```
+
+---
+
+# 2. Very Important: No Hardcoded Categories
+
+Do NOT hardcode categories such as:
+
+```javascript
+const categories = [
+    "Images",
+    "Documents",
+    "Videos"
+];
+```
+
+The application should be designed so that categories come from the repository structure.
+
+If a new folder is added, it should become a new category automatically.
+
+For example, if I later add:
+
+```text
+avatars/
+```
+
+the UI should automatically show:
+
+```text
+Avatars
+```
+
+If I add:
+
+```text
+contracts/
+```
+
+it should automatically show:
+
+```text
+Contracts
+```
+
+If I add:
+
+```text
+excel/
+```
+
+it should automatically show:
+
+```text
+Excel
+```
+
+The code must not require manually editing a category list.
+
+---
+
+# 3. Nested Folders
+
+Support nested folders.
+
+Example:
+
+```text
+images/
+    users/
+        admins/
+        customers/
+
+    products/
+        electronics/
+        cars/
+
+documents/
+    legal/
+        contracts/
+        invoices/
+```
+
+The application should preserve this hierarchy.
+
+A folder can therefore contain:
+
+* files
+* other folders
+
+Nested folders should behave as subcategories.
+
+For example:
+
+```text
+Images
+   Users
+      Admins
+      Customers
+
+   Products
+      Electronics
+      Cars
+```
+
+---
+
+# 4. Static GitHub Pages Limitation
+
+The website must work with static hosting.
+
+There is no backend.
+
+Because a normal GitHub Pages website cannot directly scan the server filesystem using browser JavaScript, implement a practical solution.
+
+Use a generated metadata/index file such as:
+
+```text
+assets.json
+```
+
+This JSON file should describe the repository structure.
+
+Example:
+
+```json
+{
+  "categories": [
+    {
+      "name": "Images",
+      "path": "images",
+      "children": [
+        {
+          "name": "Users",
+          "path": "images/users",
+          "children": [],
+          "files": [
+            {
+              "name": "user-01.jpg",
+              "path": "images/users/user-01.jpg",
+              "type": "image"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+The frontend should load:
+
+```javascript
+fetch("./assets.json")
+```
+
+and dynamically generate the entire UI.
+
+---
+
+# 5. Automatic assets.json generation
+
+Also create a simple GitHub Actions workflow that automatically scans the repository and regenerates `assets.json` whenever files/folders are added or removed.
+
+The workflow should:
+
+1. Run on every push to `main`.
+2. Scan the repository.
+3. Ignore:
+
+   * `.git`
+   * `.github`
+   * `index.html`
+   * `assets.json`
+   * workflow files
+   * unnecessary project files
+4. Detect all folders.
+5. Detect all files.
+6. Determine file types.
+7. Generate `assets.json`.
+8. Commit the generated `assets.json` back to the repository if it changed.
+9. Allow GitHub Pages to serve the updated website.
+
+Use a simple approach that does not require a complex application.
+
+---
+
+# 6. File Types
+
+Support at least these file types:
+
+### Images
+
+```text
+.jpg
+.jpeg
+.png
+.gif
+.webp
+.svg
+```
+
+### Videos
+
+```text
+.mp4
+.webm
+.mov
+```
+
+### Audio
+
+```text
+.mp3
+.wav
+.ogg
+```
+
+### Documents
+
+```text
+.pdf
+.doc
+.docx
+.xls
+.xlsx
+.ppt
+.pptx
+.txt
+.csv
+```
+
+### Data
+
+```text
+.json
+.xml
+```
+
+### Other
+
+Any unknown extension should still appear in the UI as a generic file.
+
+---
+
+# 7. Beautiful UI
+
+Create a modern, professional UI.
+
+The design should feel like a lightweight:
+
+**Asset Manager / File Explorer / API Test Assets Library**
+
+Do NOT make it look like a basic HTML directory listing.
+
+Use:
+
+* clean typography
+* cards
+* subtle shadows
+* rounded corners
+* good spacing
+* smooth hover effects
+* responsive layout
+* modern buttons
+* modern search field
+* category navigation
+* file type icons
+* image previews
+* modal preview
+* copy URL buttons
+
+Use CSS variables so the theme is easy to customize.
+
+---
+
+# 8. Header
+
+Create a beautiful header containing:
+
+### Logo
+
+Example:
+
+```text
+API Assets
+```
+
+with a small icon.
+
+### Subtitle
+
+Something like:
+
+```text
+Public assets for API testing and development
+```
+
+### Search
+
+A large search box:
+
+```text
+🔍 Search assets...
+```
+
+Search should work across:
+
+* category names
+* folder names
+* file names
+* extensions
+
+---
+
+# 9. Statistics
+
+Display a small statistics section near the top.
+
+Example:
+
+```text
+12 Categories
+87 Assets
+34 Images
+10 Documents
+8 Videos
+```
+
+The numbers should be calculated dynamically from `assets.json`.
+
+Do NOT hardcode them.
+
+---
+
+# 10. Categories
+
+Display categories as attractive cards.
+
+Example:
+
+```text
+┌─────────────────────────┐
+│ 🖼                      │
+│ Images                  │
+│ 34 assets               │
+│                         │
+│ Browse →                │
+└─────────────────────────┘
+```
+
+The icon should be determined intelligently from the category/file type when possible.
+
+Examples:
+
+```text
+images     → 🖼
+videos     → 🎬
+audio      → 🎵
+documents  → 📄
+pdf        → 📕
+users      → 👤
+products   → 📦
+```
+
+If the category is unknown, use a generic folder icon.
+
+---
+
+# 11. Category View
+
+When the user clicks a category, show its contents.
+
+Example:
+
+```text
+Images
+
+[ Users ]
+[ Products ]
+[ Banners ]
+
+Files:
+
+┌─────────────────────┐
+│ image preview       │
+│                     │
+│ product-01.jpg      │
+│ JPG • 1.2 MB        │
+│                     │
+│ [Preview] [Copy URL]│
+└─────────────────────┘
+```
+
+---
+
+# 12. File Cards
+
+Each file should have a beautiful card.
+
+For images:
+
+```text
+┌─────────────────────────┐
+│                         │
+│      IMAGE PREVIEW      │
+│                         │
+├─────────────────────────┤
+│ user-01.jpg             │
+│ JPG • Image             │
+│                         │
+│ [Preview] [Copy URL]    │
+└─────────────────────────┘
+```
+
+For PDFs/documents:
+
+```text
+┌─────────────────────────┐
+│          📄             │
+│                         │
+│ example.pdf             │
+│ PDF • Document          │
+│                         │
+│ [Open] [Copy URL]       │
+└─────────────────────────┘
+```
+
+For videos:
+
+Show a video thumbnail/player preview if possible.
+
+For audio:
+
+Show a small audio player.
+
+For JSON:
+
+Show a code/document style icon.
+
+For unknown files:
+
+Show a generic file icon.
+
+---
+
+# 13. File URL
+
+Every item must have a correctly generated public URL.
+
+Example:
+
+```text
+https://USERNAME.github.io/REPOSITORY/images/users/user-01.jpg
+```
+
+Do NOT hardcode the domain.
+
+Build the URL dynamically using:
+
+```javascript
+window.location.origin
+```
+
+and:
+
+```javascript
+window.location.pathname
+```
+
+or another reliable method that works when the site is hosted under:
+
+```text
+https://username.github.io/repository-name/
+```
+
+The code must correctly support GitHub Pages project URLs.
+
+---
+
+# 14. Copy URL
+
+Every file should have:
+
+```text
+Copy URL
+```
+
+button.
+
+When clicked:
+
+1. Copy the public URL to clipboard.
+2. Change the button text temporarily to:
+   `Copied!`
+3. Show a small toast notification.
+
+Example:
+
+```text
+✓ URL copied to clipboard
+```
+
+Do not use external libraries.
+
+Use the native Clipboard API.
+
+Provide a graceful fallback if Clipboard API is unavailable.
+
+---
+
+# 15. Preview
+
+Implement a preview modal.
+
+For images:
+
+* show large image
+
+For PDFs:
+
+* open/embed the PDF when possible
+
+For videos:
+
+* show video player
+
+For audio:
+
+* show audio player
+
+For JSON:
+
+* display formatted JSON
+
+For text:
+
+* display text
+
+For unsupported files:
+
+* show file information and an Open button.
+
+The modal should have:
+
+```text
+×
+```
+
+close button.
+
+Also allow closing by:
+
+* clicking outside the modal
+* pressing Escape
+
+---
+
+# 16. Search
+
+Implement live search.
+
+Example:
+
+User types:
+
+```text
+user
+```
+
+Show:
+
+```text
+user-01.jpg
+user-02.jpg
+users/admin/avatar.png
+```
+
+Search should be case-insensitive.
+
+Search should include:
+
+* filename
+* folder name
+* category
+* extension
+
+Show:
+
+```text
+No assets found
+```
+
+when nothing matches.
+
+---
+
+# 17. Breadcrumbs
+
+When navigating into nested folders, display breadcrumbs.
+
+Example:
+
+```text
+Home / Images / Users / Admins
+```
+
+Each breadcrumb should be clickable.
+
+Example:
+
+```text
+Home
+  >
+Images
+  >
+Users
+  >
+Admins
+```
+
+---
+
+# 18. Back Navigation
+
+Provide a clear:
+
+```text
+← Back
+```
+
+button when inside a category/subcategory.
+
+Also support browser history where practical.
+
+---
+
+# 19. Sorting
+
+Add sorting options:
+
+```text
+Sort by:
+- Name A-Z
+- Name Z-A
+- Type
+```
+
+Keep the implementation in Vanilla JavaScript.
+
+---
+
+# 20. View Modes
+
+Add two view modes:
+
+```text
+Grid
+List
+```
+
+Grid:
+
+```text
+[ Card ] [ Card ] [ Card ]
+[ Card ] [ Card ] [ Card ]
+```
+
+List:
+
+```text
+📄 file.pdf       PDF       [Open] [Copy URL]
+🖼 image.jpg      Image     [Preview] [Copy URL]
+```
+
+Remember the selected view mode using:
+
+```javascript
+localStorage
+```
+
+---
+
+# 21. Dark Mode
+
+Add a dark/light mode toggle.
+
+Use CSS variables.
+
+Remember the user's choice using:
+
+```javascript
+localStorage
+```
+
+The design must look good in both modes.
+
+---
+
+# 22. Responsive Design
+
+The website must work well on:
+
+* Desktop
+* Laptop
+* Tablet
+* Mobile
+
+On mobile:
+
+* cards should become one column or two columns depending on width
+* search should remain easy to use
+* navigation should not overflow
+* buttons should remain accessible
+
+---
+
+# 23. Empty Folders
+
+If a folder contains no files and no subfolders, display:
+
+```text
+This category is empty
+```
+
+with a suitable icon.
+
+---
+
+# 24. File Metadata
+
+Display useful metadata when available:
+
+* filename
+* extension
+* file type
+* folder/category
+* file size if available from metadata
+* URL
+
+If file size cannot be determined statically, simply don't display it.
+
+Do NOT make unnecessary network requests for every file just to calculate file size.
+
+---
+
+# 25. Security / Safety
+
+Never execute files.
+
+For example, JSON should be displayed as text, not executed.
+
+Escape HTML content before injecting user/file names into the DOM.
+
+Avoid unsafe:
+
+```javascript
+element.innerHTML = userControlledValue;
+```
+
+unless properly escaped.
+
+Prefer:
+
+```javascript
+textContent
+```
+
+and DOM APIs.
+
+---
+
+# 26. Performance
+
+Keep the website lightweight.
+
+Do not load every large image immediately.
+
+Use:
+
+```html
+loading="lazy"
+```
+
+for images where appropriate.
+
+Avoid unnecessary DOM operations.
+
+Keep JavaScript modular and readable.
+
+---
+
+# 27. Project Structure
+
+Generate the project with this structure:
+
+```text
+/
+├── index.html
+├── style.css
+├── app.js
+├── assets.json
+│
+├── .github/
+│   └── workflows/
+│       └── generate-assets.yml
+│
+├── images/
+├── documents/
+├── videos/
+├── audio/
+└── ...
+```
+
+The category folders are examples only.
+
+The application MUST dynamically detect whatever folders actually exist.
+
+---
+
+# 28. Code Quality
+
+Write clean production-quality code.
+
+Use:
+
+* semantic HTML
+* CSS variables
+* CSS Grid/Flexbox
+* modern JavaScript
+* ES6+
+* meaningful function names
+* comments where useful
+* no unnecessary dependencies
+
+Separate:
+
+```text
+HTML
+CSS
+JavaScript
+```
+
+Do not put everything into one HTML file.
+
+---
+
+# 29. Error Handling
+
+If:
+
+```text
+assets.json
+```
+
+cannot be loaded, display a friendly error page:
+
+```text
+Unable to load asset library
+
+Please check that assets.json exists and GitHub Pages has finished deploying.
+```
+
+If an image fails to load, show a fallback placeholder instead of breaking the UI.
+
+---
+
+# 30. Empty Repository
+
+If there are no assets yet, display:
+
+```text
+No assets yet
+
+Add files to your repository and push your changes.
+The asset library will update automatically.
+```
+
+---
+
+# 31. README
+
+Also create a `README.md` explaining:
+
+1. What this project is.
+2. How to add a new category.
+3. How to add a new file.
+4. How the automatic asset discovery works.
+5. How GitHub Actions generates `assets.json`.
+6. How to enable GitHub Pages.
+7. How to get a direct public URL for an asset.
+8. How to use the asset URLs in Postman.
+
+Example:
+
+```text
+Add a new category:
+
+images/
+products/
+
+Add a file:
+
+images/products/product-01.jpg
+
+Push:
+
+git add .
+git commit -m "Add product image"
+git push
+```
+
+The GitHub Action should update the asset index automatically.
+
+---
+
+# 32. Postman Usage
+
+The website is primarily intended to provide assets for API testing.
+
+Make sure the direct file URL can be copied easily.
+
+For example:
+
+```text
+https://username.github.io/postman-assets/images/products/product-01.jpg
+```
+
+This URL can then be used in Postman:
+
+```json
+{
+    "imageUrl": "https://username.github.io/postman-assets/images/products/product-01.jpg"
+}
+```
+
+---
+
+# 33. Important Design Requirement
+
+Make the final result look like a **real polished developer tool**, not a beginner project.
+
+Use a visual hierarchy similar to:
+
+```text
+┌──────────────────────────────────────────────────────┐
+│ API Assets                         🌙       Search   │
+│ Public assets for API testing                       │
+├──────────────────────────────────────────────────────┤
+│                                                      │
+│  12 Categories     87 Assets     34 Images           │
+│                                                      │
+├──────────────────────────────────────────────────────┤
+│ Categories                                           │
+│                                                      │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐            │
+│  │ 🖼 Images│ │ 📄 Docs  │ │ 🎬 Video │            │
+│  │ 34       │ │ 21       │ │ 8        │            │
+│  └──────────┘ └──────────┘ └──────────┘            │
+│                                                      │
+├──────────────────────────────────────────────────────┤
+│ Recent / All Assets                                  │
+│                                                      │
+│  ┌────────────┐ ┌────────────┐ ┌────────────┐      │
+│  │   IMAGE    │ │     📄     │ │     🎬     │      │
+│  │            │ │            │ │            │      │
+│  │ user.jpg   │ │ test.pdf   │ │ demo.mp4   │      │
+│  │            │ │            │ │            │      │
+│  │ Copy URL   │ │ Open       │ │ Preview    │      │
+│  └────────────┘ └────────────┘ └────────────┘      │
+└──────────────────────────────────────────────────────┘
+```
+
+Use a professional color palette, but keep it easy to customize through CSS variables.
+
+---
+
+# 34. Final Deliverables
+
+Return ALL required files with complete working code:
+
+```text
+index.html
+style.css
+app.js
+assets.json
+.github/workflows/generate-assets.yml
+README.md
+```
+
+Do not provide pseudocode.
+
+Do not leave TODO placeholders.
+
+The result should be ready to upload directly to a GitHub repository and enable GitHub Pages.
+
+Most importantly:
+
+**Adding a folder should automatically make it appear as a category.**
+
+**Adding files inside that folder should automatically make them appear as items.**
+
+**Removing a folder/file should automatically remove it from the website after the GitHub Action regenerates `assets.json`.**
+
+The frontend must not require manually editing category or file lists.
+
+# 35. Icons — SVG Only, No Emojis
+
+Do NOT use emojis anywhere in the application UI.
+
+Do not use characters such as:
+
+```text
+🖼
+📄
+🎬
+🎵
+📦
+👤
+🌙
+🔍
+←
+→
+✓
+×
+```
+
+Instead, use **SVG icons** throughout the entire application.
+
+Use inline SVG icons or locally defined reusable SVG components.
+
+Do NOT depend on external icon libraries such as:
+
+* Font Awesome
+* Bootstrap Icons
+* Material Icons
+* Lucide CDN
+* Heroicons CDN
+* Any external icon package
+
+The application must work completely offline after the repository is loaded.
+
+Create a reusable SVG icon system in Vanilla JavaScript.
+
+For example:
+
+```javascript
+const icons = {
+    folder: `<svg ...>...</svg>`,
+    image: `<svg ...>...</svg>`,
+    file: `<svg ...>...</svg>`,
+    document: `<svg ...>...</svg>`,
+    video: `<svg ...>...</svg>`,
+    audio: `<svg ...>...</svg>`,
+    search: `<svg ...>...</svg>`,
+    moon: `<svg ...>...</svg>`,
+    sun: `<svg ...>...</svg>`,
+    arrowLeft: `<svg ...>...</svg>`,
+    arrowRight: `<svg ...>...</svg>`,
+    copy: `<svg ...>...</svg>`,
+    check: `<svg ...>...</svg>`,
+    close: `<svg ...>...</svg>`,
+    externalLink: `<svg ...>...</svg>`,
+    download: `<svg ...>...</svg>`,
+    grid: `<svg ...>...</svg>`,
+    list: `<svg ...>...</svg>`,
+    folderOpen: `<svg ...>...</svg>`
+};
+```
+
+All icons should use:
+
+```html
+<svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round">
+</svg>
+```
+
+Use `currentColor` so icons automatically inherit the surrounding text/button color.
+
+---
+
+## Icon Requirements
+
+Create SVG icons for at least:
+
+* Folder
+* Open folder
+* Image
+* Document
+* PDF
+* Word
+* Excel
+* PowerPoint
+* Video
+* Audio
+* JSON
+* XML
+* Text
+* CSV
+* Generic file
+* Search
+* Copy
+* Copied/Check
+* Preview
+* External link
+* Download
+* Back
+* Forward
+* Close
+* Menu
+* Grid view
+* List view
+* Sun
+* Moon
+* Sort
+* Filter
+* Home
+* Chevron right
+* Chevron down
+* Empty state
+* Error state
+
+---
+
+## No Emoji Fallbacks
+
+Do not use emojis even for:
+
+* Empty states
+* Error messages
+* Categories
+* File types
+* Buttons
+* Notifications
+* Navigation
+* Theme toggle
+* Statistics
+* Tooltips
+* Loading states
+
+For example, instead of:
+
+```text
+No assets yet
+```
+
+with an emoji such as:
+
+```text
+📁 No assets yet
+```
+
+use an SVG folder icon:
+
+```html
+<div class="empty-state">
+    <svg ...>
+        ...
+    </svg>
+
+    <h3>No assets yet</h3>
+    <p>Add files to your repository and push your changes.</p>
+</div>
+```
+
+---
+
+## Accessibility
+
+SVG icons must not negatively affect accessibility.
+
+Decorative icons should use:
+
+```html
+aria-hidden="true"
+```
+
+Buttons must still have accessible labels.
+
+For icon-only buttons, use:
+
+```html
+<button aria-label="Copy URL">
+```
+
+Do not rely on the icon alone to communicate the button's purpose.
+
+Use tooltips where appropriate.
+
+---
+
+## Visual Style
+
+The SVG icons should have a consistent visual style throughout the application.
+
+Use:
+
+* Consistent stroke width
+* Consistent `viewBox`
+* `currentColor`
+* Clean line-based icons
+* Smooth appearance
+* Proper alignment with text
+* Appropriate sizing
+
+Icons should look like part of one professional design system.
+
+The final UI should look like a modern developer tool rather than a page containing random icons.
+
+**Absolute requirement: ZERO emojis in the final application. Use SVG icons everywhere an icon is needed.**

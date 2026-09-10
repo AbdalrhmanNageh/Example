@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SVG Test</title>
+<style>
+body{
+    font-family: Arial, sans-serif;
+    text-align:center;
+    margin-top:40px;
+}
+button{
+    padding:10px 20px;
+    margin:10px;
+    font-size:16px;
+}
+</style>
+</head>
+<body>
+
+<!-- SVG Header -->
+<svg width="300" height="100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="300" height="100" fill="#4CAF50"/>
+    <text x="150" y="60"
+          text-anchor="middle"
+          fill="white"
+          font-size="40">
+        TEST
+    </text>
+</svg>
+
+<br><br>
+
+<button onclick="alert('Hello from HTML!')">
+    Alert
+</button>
+
+<button onclick="showSVG()">
+    Show SVG
+</button>
+
+<div id="result" style="margin-top:30px;"></div>
+
+<script>
+function showSVG(){
+    document.getElementById("result").innerHTML = `
+    <svg width="220" height="120" xmlns="http://www.w3.org/2000/svg">
+        <rect width="220" height="120" rx="15" fill="#2196F3"/>
+        <text x="110" y="70"
+              text-anchor="middle"
+              fill="white"
+              font-size="32">
+            Test
+        </text>
+    </svg>`;
+}
+</script>
+
+</body>
+</html>
