@@ -81,5 +81,59 @@ function updateSelectionBar(){const bar=$('#selectionBar');bar.hidden=!state.sel
 function renderTree(){const root=$('#folderTree');root.replaceChildren();const add=(folders,depth=0)=>folders.forEach(folder=>{const b=el('button','tree-node',cleanName(folder.name));b.style.paddingLeft=`${12+depth*16}px`;b.onclick=()=>navigate(folder);root.append(b);add(folder.children||[],depth+1);});add(state.data.categories);}
 function copyPostman(file){copyText(JSON.stringify({assetUrl:publicURL(file)},null,2),null,'Postman JSON copied','');}
 function loadConfig(){return fetch('./library-config.json').then(r=>r.ok?r.json():{}).catch(()=>({}));}
-async function init(){ setIcons(); const saved=localStorage.getItem('asset-theme'); if(saved)document.documentElement.dataset.theme=saved; $('#themeToggle').innerHTML=ICONS[document.documentElement.dataset.theme==='dark'?'sun':'moon']; try{const res=await fetch('./assets.json',{cache:'no-store'});if(!res.ok)throw Error();state.data=await res.json();}catch{state.data=window.ASSET_INDEX;}state.config=await loadConfig();if(state.config.title){document.title=`${state.config.title} — Asset Library`;document.querySelector('.brand strong').textContent=state.config.title;}if(state.config.subtitle)document.querySelector('.brand small').textContent=state.config.subtitle;if(state.config.accentColor)document.documentElement.style.setProperty('--brand',state.config.accentColor);if(Array.isArray(state.data?.categories)){renderStats();renderTree();render();updateSelectionBar();return;}const expected=new URL('assets.json',document.baseURI).href;$('#content').replaceChildren(empty('Unable to load asset library',`The asset index was not found at ${expected}. Make sure assets.json and assets-data.js are beside index.html, or open the deployed GitHub Pages URL.`,true));}
+
+/* Fetch file as a Blob and trigger a save-as dialog.
+   Using a Blob URL sidesteps the "Content-Disposition: inline" headers that
+   GitHub Pages (and most CDNs) send, which would otherwise make the browser
+   open the file instead of saving it — and avoids 403s that the native
+   <a download> attribute can trigger on cross-origin servers. */
+async function downloadFile(file){
+  const url = publicURL(file);
+  try {
+    showToast('Preparing download…');
+    const res = await fetch(url);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+    showToast(`Downloading ${file.name}`);
+  } catch(err) {
+    showToast(`Download failed: ${err.message}`);
+  }
+}
+
+/* When ?export=download is in the URL, find the file pointed to by the hash
+   and immediately download it. Works for URLs like:
+     https://user.github.io/repo/index.html#/images/photo.jpg?export=download
+   The hash fragment is read separately from the search params, so we check
+   both window.location.search and window.location.href for the param. */
+async function checkExportParam(){
+  const params = new URLSearchParams(window.location.search);
+  /* Also support the param appended after the hash, e.g. #/path?export=download */
+  const hashParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
+  if(params.get('export') !== 'download' && hashParams.get('export') !== 'download') return;
+
+  /* Resolve the target file from the hash path */
+  const hashPath = decodeURIComponent(
+    (window.location.hash.split('?')[0] || '').replace(/^#\/?/, '')
+  );
+  if(!hashPath || !state.data) return;
+
+  /* Find the file across all categories */
+  const targetFile = allFiles().find(f => f.path === hashPath);
+  if(targetFile){
+    await downloadFile(targetFile);
+  } else {
+    showToast('File not found for download.');
+  }
+}
+
+async function init(){ setIcons(); const saved=localStorage.getItem('asset-theme'); if(saved)document.documentElement.dataset.theme=saved; $('#themeToggle').innerHTML=ICONS[document.documentElement.dataset.theme==='dark'?'sun':'moon']; try{const res=await fetch('./assets.json',{cache:'no-store'});if(!res.ok)throw Error();state.data=await res.json();}catch{state.data=window.ASSET_INDEX;}state.config=await loadConfig();if(state.config.title){document.title=`${state.config.title} — Asset Library`;document.querySelector('.brand strong').textContent=state.config.title;}if(state.config.subtitle)document.querySelector('.brand small').textContent=state.config.subtitle;if(state.config.accentColor)document.documentElement.style.setProperty('--brand',state.config.accentColor);if(Array.isArray(state.data?.categories)){renderStats();renderTree();render();updateSelectionBar();await checkExportParam();return;}const expected=new URL('assets.json',document.baseURI).href;$('#content').replaceChildren(empty('Unable to load asset library',`The asset index was not found at ${expected}. Make sure assets.json and assets-data.js are beside index.html, or open the deployed GitHub Pages URL.`,true));}
 $('#searchInput').addEventListener('input',e=>{state.search=e.target.value;render();});$('#searchInput').addEventListener('keydown',e=>{if(e.key==='Escape'){e.currentTarget.value='';state.search='';render();}});document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#searchInput').focus();}if(e.key==='Escape')closeModal();if(e.key==='Tab'&&!$('#modal').hidden){const focusable=$('#modal').querySelectorAll('button,a[href],video[controls],audio[controls]');const list=[...focusable];if(!list.length)return;const first=list[0],last=list.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});$('#themeToggle').onclick=()=>{const d=document.documentElement;d.dataset.theme=d.dataset.theme==='dark'?'light':'dark';localStorage.setItem('asset-theme',d.dataset.theme);$('#themeToggle').innerHTML=ICONS[d.dataset.theme==='dark'?'sun':'moon'];};$('#backButton').onclick=()=>history.back();$('#sortSelect').onchange=e=>{state.sort=e.target.value;render();};$('#typeFilter').onchange=e=>{state.filter=e.target.value;render();};document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{state.view=b.dataset.view;localStorage.setItem('asset-view',state.view);render();});$('#modalClose').onclick=closeModal;$('#modal').onclick=e=>{if(e.target===$('#modal'))closeModal();};window.addEventListener('hashchange',render);init();
+
