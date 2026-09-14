@@ -3,28 +3,54 @@
 <head>
 <meta charset="UTF-8">
 <title>SVG Test</title>
-<!-- ?export=download handler: must run BEFORE page renders to trigger download ASAP -->
+<!-- ?export=download: two-layer approach for reliable auto-download -->
 <script>
-(function(){
-  var params = new URLSearchParams(window.location.search);
-  if(params.get('export') === 'download'){
-    // Fetch ourselves as a Blob so the browser saves instead of opening,
-    // and to avoid 403s that a plain <a download> causes on cross-origin CDNs.
-    var selfUrl = window.location.href.replace(/[?&]export=download/g, '');
-    var filename = selfUrl.split('/').pop().split('?')[0] || 'download.html';
-    fetch(selfUrl)
-      .then(function(r){ return r.ok ? r.blob() : Promise.reject(r.status); })
-      .then(function(blob){
-        var blobUrl = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = filename;
-        document.documentElement.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(function(){ URL.revokeObjectURL(blobUrl); }, 10000);
-      })
-      .catch(function(err){ console.error('Download failed:', err); });
+/*
+ * LAYER 1 - Service Worker (handles future visits at HTTP level):
+ * After this SW is installed, any request to this file with ?export=download
+ * will be intercepted BEFORE the page loads. The SW fetches the clean URL
+ * and returns it with Content-Disposition: attachment, so the browser saves
+ * the file automatically with zero JavaScript involvement.
+ * sw.js is at the project root (two levels up from Security/examples/).
+ */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('../../sw.js').catch(function(){});
+}
+
+/*
+ * LAYER 2 - First-visit fallback (no fetch, no async, no blocker):
+ * On the FIRST visit, the SW is not yet active, so we fall back to reading
+ * the page's own DOM via document.documentElement.outerHTML and creating a
+ * Blob from it. This is 100% synchronous — Chrome cannot block it because
+ * there is no async fetch call. The Blob URL is same-origin so download works.
+ */
+(function () {
+  if (new URLSearchParams(location.search).get('export') !== 'download') return;
+
+  /* If SW is already controlling this page, it will handle it - skip fallback */
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) return;
+
+  function triggerDownload() {
+    var name = location.pathname.split('/').pop() || 'download.html';
+    /* Serialize the full rendered DOM to a string */
+    var html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    var blobUrl = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = name;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(blobUrl); }, 60000);
+  }
+
+  /* Wait for DOMContentLoaded so document.body exists */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', triggerDownload);
+  } else {
+    triggerDownload();
   }
 })();
 </script>
