@@ -22,9 +22,24 @@ document.addEventListener('DOMContentLoaded', () => {
     copyText(urls, document.querySelector('#bulkCopy'), 'Selected URLs copied', 'Copy URLs');
   });
   document.querySelector('#bulkDownload').addEventListener('click', () => {
-    allFiles().filter(file => state.selected.has(file.path)).forEach((file, index) => setTimeout(() => {
-      const link = document.createElement('a'); link.href = publicURL(file); link.download = file.name; document.body.append(link); link.click(); link.remove();
-    }, index * 200));
+    const files = allFiles().filter(file => state.selected.has(file.path));
+    files.forEach((file, index) => setTimeout(() => {
+      const url = publicURL(file);
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        /* SW active: navigate to ?export=download — SW returns Content-Disposition: attachment */
+        const exportUrl = url + (url.includes('?') ? '&' : '?') + 'export=download';
+        const a = document.createElement('a'); a.href = exportUrl; a.style.display = 'none';
+        document.body.append(a); a.click(); a.remove();
+      } else {
+        /* SW not yet controlling: fetch + blob fallback */
+        fetch(url).then(r => r.blob()).then(blob => {
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a'); a.href = blobUrl; a.download = file.name;
+          document.body.append(a); a.click(); a.remove();
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+        });
+      }
+    }, index * 300));
   });
   const decorateCards = () => document.querySelectorAll('.asset-card:not([data-enhanced])').forEach(card => {
     card.dataset.enhanced = 'true';
